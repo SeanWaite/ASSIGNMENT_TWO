@@ -3,6 +3,8 @@
 {% block main %}
 
 <br>
+
+<!-- This is the invoice page with addresses top left and right -->
 <div class="flex-row">
     <div class = "d-flex justify-content-center">
         <h3>Invoice</h3>
@@ -39,8 +41,11 @@
     </div>
 </div>
 <br>
+<!-- Invoice details -->
 <h6>Date: {{invoice.date_created}}</h6>
 <h6>Invoice Number: {{invoice.invoice_number}}</h6>
+
+<!-- Lesson details included on the invoice -->
 <div class="card card-body">
     <table class="table table-sm table-striped">
         <tr>

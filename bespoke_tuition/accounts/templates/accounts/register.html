@@ -6,6 +6,7 @@
 <h5>Please fill in the details below to register</h5>
 <br>
 
+<!-- Form to register-->
 <form action="" method="POST">
     
     {% csrf_token %}
@@ -31,8 +32,10 @@
     <button type="submit" class="btn btn-primary">Register</button>
 </form>
 
+<!-- Display errors if occurred, such as validation error for wrong username or password -->
 {{ form.errors }}
 
+<!-- Link to register if required -->
 <br>
 <h7>Already have an account?</h7>
 <br>

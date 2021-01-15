@@ -5,7 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Used bootstrap to aide in quicker development... for now -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <!-- Below is my style sheet to be used at a later date -->
     <!--<link rel="stylesheet" type="text/css" href="{% static 'accounts/style.css' %}">-->
     <title>LW Bespoke Tuition</title>
 </head>
@@ -13,10 +15,12 @@
     <div class="container-fluid">
     <h1>LW Bespoke Tuition</h1>
     <hr>
+    <!-- Check if user is authenticated to see the nav bar -->
     {% if request.user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
+            <!-- Only admins should see this nav bar -->
             {% if request.user.is_staff %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'accounts:home' %}">Home <span class="sr-only">(current)</span></a>
@@ -37,6 +41,7 @@
                     <a class="nav-link" href="{% url 'accounts:invoices' %}">Invoices</a>
                 </li>
             {% endif %}
+            <!-- Only customers should see this nav bar -->
             {% if flag %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'accounts:home' %}">Home <span class="sr-only">(current)</span></a>
@@ -55,6 +60,7 @@
     </nav>
     {% endif %}
     
+    <!-- Below is the start of my own css nav bar to be used at a later date -->
     <!--<div class="nav-bar">
         <a href="{% url 'accounts:home' %}">Home</a>
         <a href="{% url 'accounts:allclients' %}">All Customers</a>

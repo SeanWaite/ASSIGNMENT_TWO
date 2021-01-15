@@ -6,10 +6,12 @@
 <h5>Login</h5>
 <br>
 
+<!-- Display messages once successfully registered -->
 {% for message in messages %}
     <h7>{{ message }}</h7>
 {% endfor %}
 
+<!-- Form to log in -->
 <form action="" method="POST">
 
     {% csrf_token %}
@@ -27,6 +29,7 @@
     <button type="submit" class="btn btn-primary">Login</button>
 </form>
 
+<!-- Link to register if required -->
 <br>
 <h7>Don't have an account?</h7>
 <br>

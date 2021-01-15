@@ -6,10 +6,12 @@
 <h5>Please insert new students below</h5>
 
 <br>
+<!-- Form to add new student, forms linked -->
 <div class="card card-body">
     <form action="" method="POST">
         {% csrf_token %}
 
+        <!-- Seperated this form into seperate components for a better ordering -->
         <h6>Student details:</h6>
         <hr>
         <div class="form-group">

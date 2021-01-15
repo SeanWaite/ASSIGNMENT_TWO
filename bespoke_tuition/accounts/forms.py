@@ -6,22 +6,29 @@ from django.contrib.auth.models import User
 from datetime import datetime
 from django.core.exceptions import ValidationError
 
+# Imported all models as all required
 from .models import *
 
+# Class to display calendar for datetime fields
 class DateTimeInput(forms.DateTimeInput):
     input_type = 'datetime-local'
 
+# Class to display calendar for date fields
 class DateInput(forms.DateInput):
     input_type = 'date'
 
+# Class to add new clients, excluded fields not required at point on client creation
 class AddClientForm(ModelForm):
     class Meta:
         model = Client
         exclude = ('date_inserted', 'active', 'contract_signed', 'user')
 
+# Both inline forsets allow the forms to be displayed on the same page and linked via
+# the foreign key. This meant I didn't need 3 pages to populate the customers information
 AddAddressSet = inlineformset_factory(Client, Address, exclude=('effective_from_date','effective_to_date'), extra=1, can_delete=False)
 AddContactSet = inlineformset_factory(Client, ContactDetails, exclude=(), extra=1, can_delete=False, widgets={'email_address': EmailInput})
 
+# Class to add new students
 class AddStudentForm(ModelForm):
     class Meta:
         model = Student
@@ -29,19 +36,25 @@ class AddStudentForm(ModelForm):
         widgets = {'parent': CheckboxSelectMultiple(),
                    'date_of_birth': DateInput()}
     
+    # Validation required to not select more than 2 parents. Error returned the page if they are.
     def clean(self):
         cleaned_data = super().clean()
         parents = cleaned_data.get("parent")
         errors={}
 
+        # if more that 2 check boxes are selected
         if len(parents) > 2:
             errors['parent'] = ValidationError("Should not select more that 2 parents")
 
         if errors:
             raise ValidationError(errors)
 
+# Inline forsets allow the forms to be displayed on the same page and linked via
+# the foreign key. This meant I didn't need 2 pages to populate the students information
 AddStudentAddressSet = inlineformset_factory(Student, TuitionAddress, exclude=('effective_from_date','effective_to_date'), extra=1, can_delete=False)
 
+# Class to add lessons for the students, at this point not invoice is generated so these
+# fields could be hidden using HiddenInput(). Also used DateTimeInput to bring up calendar
 class AddLessonForm(ModelForm):
     class Meta:
         model = Lesson
@@ -52,6 +65,7 @@ class AddLessonForm(ModelForm):
                    'invoice_number': forms.HiddenInput(),
                    'student': forms.HiddenInput()}
 
+    # Validation required to start can't be after end datetime
     def clean(self):
         cleaned_data = super().clean()
         lesson_start = cleaned_data.get("lesson_start")
@@ -64,15 +78,28 @@ class AddLessonForm(ModelForm):
         if errors:
             raise ValidationError(errors)
 
-
+# Class to update the lesson form is needs be
+# Validation required to start can't be after end datetime
 class UpdateLessonForm(ModelForm):
     class Meta:
         model = Lesson
         exclude = ()
-        widgets = {'lesson_start': DateTimeInput(), 
-                   'lesson_end':DateTimeInput(),
-                   'student': forms.HiddenInput()}
+        widgets = {'student': forms.HiddenInput()}
 
+    # Validation required to start can't be after end datetime    
+    def clean(self):
+        cleaned_data = super().clean()
+        lesson_start = cleaned_data.get("lesson_start")
+        lesson_end = cleaned_data.get("lesson_end")
+        errors={}
+
+        if lesson_start > lesson_end:
+            errors['lesson_start'] = ValidationError("The lesson start should be before the lesson end")
+
+        if errors:
+            raise ValidationError(errors)
+
+# Class to add new products. Validation required to start can't be after end datetime
 class AddProductForm(ModelForm):
     class Meta:
         model = Products
@@ -80,6 +107,7 @@ class AddProductForm(ModelForm):
         widgets = {'effective_from_date': DateInput(),
                    'effective_to_date': DateInput()}
 
+    # Validation required to start can't be after end datetime
     def clean(self):
         cleaned_data = super().clean()
         eff_from_date = cleaned_data.get("effective_from_date")
@@ -92,12 +120,14 @@ class AddProductForm(ModelForm):
         if errors:
             raise ValidationError(errors)
 
+# Class to update products. Validation required to start can't be after end datetime
 class UpdateProductForm(ModelForm):
     class Meta:
         model = Products
         exclude = ()
         widgets = {}
 
+    # Validation required to start can't be after end datetime
     def clean(self):
         cleaned_data = super().clean()
         eff_from_date = cleaned_data.get("effective_from_date")
@@ -110,7 +140,7 @@ class UpdateProductForm(ModelForm):
         if errors:
             raise ValidationError(errors)
 
-
+# Class to add new terms. Alot of Validation required on dates here
 class AddTermForm(ModelForm):
     class Meta:
         model = Term
@@ -120,6 +150,7 @@ class AddTermForm(ModelForm):
                    'half_term_start_date': DateInput(),
                    'half_term_end_date': DateInput(),}
     
+    # Validation required to start can't be after end datetime on the 4 seperate date fields
     def clean(self):
         cleaned_data = super().clean()
         term_start = cleaned_data.get("term_start_date")
@@ -143,12 +174,14 @@ class AddTermForm(ModelForm):
         if errors:
             raise ValidationError(errors)
 
+# Class to update terms. Alot of Validation required on dates here
 class UpdateTermForm(ModelForm):
     class Meta:
         model = Term
         exclude = ()
         widgets = {}
     
+    # Validation required to start can't be after end datetime on the 4 seperate date fields
     def clean(self):
         cleaned_data = super().clean()
         term_start = cleaned_data.get("term_start_date")
@@ -172,6 +205,7 @@ class UpdateTermForm(ModelForm):
         if errors:
             raise ValidationError(errors)
 
+# Class to create new invoices
 class CreateInvoiceForm(ModelForm):
     class Meta:
         model = Invoices
@@ -180,6 +214,7 @@ class CreateInvoiceForm(ModelForm):
                    'amount_paid': forms.HiddenInput(),
                    'amount_outstanding': forms.HiddenInput()}
     
+    # Validation required to check the total amount greater than 0
     def clean(self):
         cleaned_data = super().clean()
         total_amount = cleaned_data.get("total_amount")
@@ -191,12 +226,15 @@ class CreateInvoiceForm(ModelForm):
         if errors:
             raise ValidationError(errors)
 
-
+# Class to create new users. Here we wanted to be sure the user already add an email inserted by
+# admin to be able to create an account. This way it should be more secure.
 class CreateUserForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
     
+    # Validation to check the email provided exists on the DB already. Also validation to ensure
+    # the same email address cannot be registered twice.
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get("email")
@@ -217,6 +255,8 @@ class CreateUserForm(UserCreationForm):
         if errors:
             raise ValidationError(errors)
 
+# Class to update the invoices to add status updates and amounts paid.
+# Some fields set to read only so they cannot be edited such as total and invoice number
 class UpdateInvoiceForm(ModelForm):
     class Meta:
         model = Invoices
@@ -226,16 +266,13 @@ class UpdateInvoiceForm(ModelForm):
                    'client': forms.HiddenInput(),
                    'amount_outstanding': forms.HiddenInput()}
 
+    # Validation to ensure the status will match the amount being paid. The amount should also
+    # be greater than 0 but less than or equal to the total amount
     def clean(self):
         cleaned_data = super().clean()
         status = cleaned_data.get("status")
         total_amount = cleaned_data.get("total_amount")
         amount_paid = cleaned_data.get("amount_paid")
-
-        print(status)
-        print(total_amount)
-        print(amount_paid)
-
 
         errors={}
 

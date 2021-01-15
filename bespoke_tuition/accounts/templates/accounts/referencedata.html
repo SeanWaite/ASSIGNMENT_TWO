@@ -3,6 +3,7 @@
 {% block main %}
 
 <br>
+<!-- Products section to display and add new -->
 <h5>Products and Terms:</h5>
 <div class="card card-body">
     <a style="width: 200px" class="btn btn-primary" href="{% url 'accounts:addproduct' %}">Add new product</a>
@@ -25,6 +26,7 @@
         {% endfor %}
     </table>
     <br>
+    <!-- Term section to display and add new -->
     <a style="width: 200px" class="btn btn-primary" href="{% url 'accounts:addterm' %}">Add new term</a>
     <br>
     <table class="table table-sm table-striped">

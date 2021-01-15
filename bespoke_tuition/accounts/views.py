@@ -40,7 +40,7 @@ def client(request, customer):
     home = clients.address.all()
     contact = clients.contacts.all()
     students = clients.student_set.all()
-    lessons = Lesson.objects.filter(student__in=students)
+    lessons = Lesson.objects.filter(student__in=students).order_by('lesson_start')
 
 
     context = {'clients': clients, 'address': home, 
@@ -103,7 +103,7 @@ def addStudent(request):
 def student(request, student):
     student = Student.objects.get(pk=student)
     tuition_address = student.address_student.all()
-    lessons = student.lesson_student.all()
+    lessons = student.lesson_student.all().order_by('lesson_start')
 
     context = {'student': student, 'lessons': lessons, 'address': tuition_address}
 
@@ -112,19 +112,50 @@ def student(request, student):
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def addLessons(request, student):
-    student = Student.objects.get(pk=student)
-    lesson_form = AddLessonForm(initial={'student':student})
+    student_details = Student.objects.get(pk=student)
+    lesson_form = AddLessonForm(initial={'student':student_details})
 
     if request.method == 'POST':
         lesson_form = AddLessonForm(request.POST)
 
         if lesson_form.is_valid():
             lesson_form.save()
-            return redirect('accounts:student', student.pk)
+            return redirect('accounts:student', student_details.pk)
 
-    context = {'student':student, 'lesson_form': lesson_form}
+    context = {'student':student_details, 'lesson_form': lesson_form}
 
     return render(request, 'accounts/addlesson.html', context)
+
+@login_required(login_url='accounts:login')
+@allowedUsers(allowed_roles=['admin'])
+def updateLesson(request, lesson):
+    lesson_details = Lesson.objects.get(pk=lesson)
+    lesson_form = UpdateLessonForm(instance=lesson_details)
+
+    if request.method == 'POST':
+        lesson_form = UpdateLessonForm(request.POST, instance=lesson_details)
+
+        if lesson_form.is_valid():
+            lesson_form.save()
+            return redirect('accounts:student', lesson_details.student.pk)
+
+    context = {'lesson_form': lesson_form}
+
+    return render(request, 'accounts/addlesson.html', context)
+
+@login_required(login_url='accounts:login')
+@allowedUsers(allowed_roles=['admin'])
+def deleteLesson(request, lesson):
+    lesson_details = Lesson.objects.get(pk=lesson)
+    student_id = lesson_details.student.pk
+
+    if request.method == 'POST':
+        lesson_details.delete()
+        return redirect('accounts:student', student_id)
+
+    context = {'student': student_id}
+
+    return render(request, 'accounts/deletelesson.html', context)
 
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])

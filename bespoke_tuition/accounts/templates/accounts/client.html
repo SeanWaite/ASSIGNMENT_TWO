@@ -4,6 +4,7 @@
 
 <br>
 
+<!-- Customer details section including name, address and contact details -->
 <h5>{{ clients.forename }} {{ clients.surname }}</h5>
 <div class="row">
     <div class = "col-md-3">
@@ -38,10 +39,12 @@
 <br>
 <h5>Child/children's Lessons:</h5>
 <div class="card card-body">
+    <!-- Link to go to specific student details page -->
     {% for student in students %}
     <a style="width: 150px" class="btn btn-primary" href="{% url 'accounts:student' student.pk %}">
             {{ student.forename }} {{student.surname}}</a>
     <br>
+    <!-- Table to show all lessons for that student -->
     <table class="table table-sm table-striped">
         <tr>
             <th>Lesson Type</th>
