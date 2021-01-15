@@ -14,17 +14,25 @@ from .models import Client, Address, ContactDetails, Student, TuitionAddress, Pr
 from .forms import *
 from .decorators import *
 
+# Basic home page to main.html which all other pages inherit from. Currently 
+# not used to show anything but can be used for pinned notices in future.
 def home(request):
+    # Set flag to display which nav bar to show
+    if request.user.is_authenticated:
+        if request.user.is_staff:
+            client_only = False
+        else:
+            client_only = True
 
-    if request.user.is_staff:
-        client_only = False
+        context = {'flag': client_only}
+
+        return render(request, 'accounts/main.html', context)
     else:
-        client_only = True
+        return redirect('accounts:login')
 
-    context = {'flag': client_only}
-
-    return render(request, 'accounts/main.html', context)
-
+# Simple view to show all clients. Only admin group allowed access. login_required to check
+# user is authenticated else they will be redirected to the login page. allowedUsers is to only
+# let users with those permissions to access the page. This will be used on most views.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def allClients(request):
@@ -33,6 +41,8 @@ def allClients(request):
 
     return render(request, 'accounts/allclients.html', context)
 
+# View to retreive students related to specific client and then the lessons related
+# to the student to be displayed.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def client(request, customer):
@@ -48,6 +58,8 @@ def client(request, customer):
 
     return render(request, 'accounts/client.html', context)
 
+# View to add new clients. Used inline form set from forms to link the instances so info
+# can all be inserted on one page.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def addClient(request): 
@@ -63,7 +75,6 @@ def addClient(request):
         if client_form.is_valid() and address_form.is_valid() and contact_form.is_valid():
             client_form.save()
             address_form.save()
-
             contact_form.save()
             return redirect('accounts:allclients')
 
@@ -71,6 +82,7 @@ def addClient(request):
 
     return render(request, 'accounts/addclient.html', context)
 
+# Simple view to show all students
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def allStudents(request):
@@ -79,6 +91,8 @@ def allStudents(request):
 
     return render(request, 'accounts/allstudents.html', context)
 
+# View to add new students. Used inline form set from forms to link the instances so info
+# can all be inserted on one page.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def addStudent(request): 
@@ -98,6 +112,7 @@ def addStudent(request):
 
     return render(request, 'accounts/addstudent.html', context)
 
+# View to for detailed look at specific student. Including their details, address and lessons
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def student(request, student):
@@ -109,6 +124,7 @@ def student(request, student):
 
     return render(request, 'accounts/student.html', context)
 
+# View to add new lessons for specific student.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def addLessons(request, student):
@@ -126,6 +142,7 @@ def addLessons(request, student):
 
     return render(request, 'accounts/addlesson.html', context)
 
+# View to update the a lesson if required
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def updateLesson(request, lesson):
@@ -143,6 +160,7 @@ def updateLesson(request, lesson):
 
     return render(request, 'accounts/addlesson.html', context)
 
+# View to delete the a lesson if required
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def deleteLesson(request, lesson):
@@ -157,6 +175,7 @@ def deleteLesson(request, lesson):
 
     return render(request, 'accounts/deletelesson.html', context)
 
+# View to display all products and terms
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def referenceData(request):
@@ -167,6 +186,7 @@ def referenceData(request):
 
     return render(request, 'accounts/referencedata.html', context)
 
+# View to add new products
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def addProducts(request):
@@ -183,6 +203,7 @@ def addProducts(request):
 
     return render(request, 'accounts/addproduct.html', context)
 
+# View to update products
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def updateProduct(request, product):
@@ -200,6 +221,7 @@ def updateProduct(request, product):
 
     return render(request, 'accounts/addproduct.html', context)
 
+# View to add new term
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def addTerms(request):
@@ -216,6 +238,7 @@ def addTerms(request):
 
     return render(request, 'accounts/addterm.html', context)
 
+# View to update term
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def updateTerm(request, term):
@@ -233,6 +256,7 @@ def updateTerm(request, term):
 
     return render(request, 'accounts/addterm.html', context)
 
+# View to show all clients for which invoices can be created
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def accounts(request):
@@ -242,6 +266,8 @@ def accounts(request):
 
     return render(request, 'accounts/accounts.html', context)
 
+# View to create the invoice using data for client and from that the student and from
+# that the lessons and related product info.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def accountsDetailed(request, customer):
@@ -251,21 +277,23 @@ def accountsDetailed(request, customer):
 
     now = datetime.now()
 
+    # Create invoice nu,ber from first 3 letters of surname and datetime now
     invoice_id = clients.surname[0:3].upper() + now.strftime("%d%m%Y%H%M%S")
-
-    print(invoice_id)
 
     lesson_total = 0
 
     for lesson in lessons:
         lesson_total += lesson.lesson_type.price
 
+    # Pre populates the invoice creation form with total amounts, and invoice number and client
+    # to be linked too
     create_invoice_form = CreateInvoiceForm(initial={'invoice_number': invoice_id,
                                                      'total_amount': lesson_total,
                                                      'client': customer,
                                                      'amount_paid': 0,
                                                      'amount_outstanding': lesson_total})
 
+    # If the amount is 0 or less we can't create a invoice so return back to accounts page
     if lesson_total <= 0:
         messages.info(request, 'No outstanding amount for ' + clients.forename + ' ' + clients.surname)
         return redirect('accounts:accounts')
@@ -275,6 +303,7 @@ def accountsDetailed(request, customer):
 
         if create_invoice_form.is_valid():
             create_invoice_form.save()
+            # Once invoice created and save all related lessons need updating to be linked to new invoice
             lessons.update(invoiced=True, invoice_number=create_invoice_form.instance)
 
             return redirect('accounts:accounts')
@@ -284,6 +313,7 @@ def accountsDetailed(request, customer):
 
     return render(request, 'accounts/accountsdetailed.html', context)
 
+# View to display all invoices
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def invoices(request):
@@ -293,6 +323,8 @@ def invoices(request):
 
     return render(request, 'accounts/invoices.html', context)
 
+# View to display the created invoice. This needs to include the address at time invoice was created
+# and to have the total number of lessons and the total cost of those lessons displayed.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def invoicesDetailed(request, invoice):
@@ -304,10 +336,12 @@ def invoicesDetailed(request, invoice):
                               effective_to_date__isnull = True ))
     lessons = invoice.invoice_no.all()
 
+    # Basically a group by statement but using list to make queryset output dictionary
     lesson_count = list(lessons.values('lesson_type__product_name', 
                                   'lesson_type__price').annotate(
                                   total=Count('lesson_type')))
 
+    # Count total for lessons from group by queryset
     for lesson in lesson_count:
         lesson["total_price"] = lesson["total"] * lesson["lesson_type__price"]
 
@@ -315,6 +349,8 @@ def invoicesDetailed(request, invoice):
 
     return render(request, 'accounts/invoicedetailed.html', context)
 
+# View to update the invoices to adjust the status and amount paid. Form locks some fields 
+# so some things like total cannot be edited.
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin'])
 def updateInvoices(request, invoice):
@@ -324,6 +360,7 @@ def updateInvoices(request, invoice):
     if request.method == 'POST':
         update_invoice_form = UpdateInvoiceForm(request.POST, instance=invoice)
 
+        # If amount paid is updated we need to update the outstanding amount
         if update_invoice_form.is_valid():
             total = update_invoice_form.cleaned_data.get('total_amount')
             paid = update_invoice_form.cleaned_data.get('amount_paid')
@@ -340,6 +377,7 @@ def updateInvoices(request, invoice):
 
     return render(request, 'accounts/updateinvoice.html', context)
 
+# View for new clients to register. Must have a client already set up by admin and matchineg email
 @authenticatedUser
 def registerPage(request): 
     reg_form = CreateUserForm()
@@ -350,11 +388,15 @@ def registerPage(request):
         if reg_form.is_valid():
             email = reg_form.cleaned_data.get('email')
             user = reg_form.save()
+            # Set new client to customer group so they can only view customer pages
             group = Group.objects.get(name='customer')
             user.groups.add(group)
 
             check_email = ContactDetails.objects.get(email_address=email)
 
+            # Only gets here if email matches one we hold (would fail in form validation).
+            # Update client user field to match new registration details so can access their
+            # client data.
             check_email.client.user = user
             check_email.client.save()
  
@@ -366,6 +408,7 @@ def registerPage(request):
 
     return render(request, 'accounts/register.html', context)
 
+# View to login in. Error displayed if credentials are incorrect
 @authenticatedUser
 def loginPage(request):
     if request.method == 'POST':
@@ -385,15 +428,18 @@ def loginPage(request):
 
     return render(request, 'accounts/login.html', context)
 
+# Simple logout button
 def logoutUser(request):
 
     logout(request)
 
     return redirect('accounts:login')
 
+# Client view to display only that users client information
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin','customer'])
 def clientView(request):
+    # Pass flag to only show customer nav bar
     client_only = True
     clients = request.user.client
     home = clients.address.all()
@@ -407,9 +453,11 @@ def clientView(request):
 
     return render(request, 'accounts/clientview.html', context)
 
+# Client view to display all invoices for the logged in users 
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin','customer'])
 def clientInvoices(request):
+    # Pass flag to only show customer nav bar
     client_only = True
     clients = request.user.client
     invoices = clients.invoices.all()
@@ -418,9 +466,11 @@ def clientInvoices(request):
 
     return render(request, 'accounts/clientinvoices.html', context)
 
+# Client view to display only that users invoice detials. Based on admin detailed invoice
 @login_required(login_url='accounts:login')
 @allowedUsers(allowed_roles=['admin','customer'])
 def clientDetailedInvoice(request, invoice):
+    # Pass flag to only show customer nav bar
     client_only = True
     client_user = request.user.client
     invoice = Invoices.objects.get(pk=invoice)

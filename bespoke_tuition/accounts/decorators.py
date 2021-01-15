@@ -1,6 +1,8 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 
+# Simple decorator to ensure the user is authenticated. If they are they should not
+# be able to access the login or register pages this is used on.
 def authenticatedUser(view_func):
     def wrapper_func(request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -10,6 +12,7 @@ def authenticatedUser(view_func):
 
     return wrapper_func
 
+# Simple decorator to ensure the user has the permissions to view a page.
 def allowedUsers(allowed_roles=[]):
     def decorator(view_func):
         def wrapper_func(request, *args, **kwargs):

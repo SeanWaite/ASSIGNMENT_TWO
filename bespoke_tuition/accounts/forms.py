@@ -65,15 +65,44 @@ class AddLessonForm(ModelForm):
                    'invoice_number': forms.HiddenInput(),
                    'student': forms.HiddenInput()}
 
-    # Validation required to start can't be after end datetime
+    # Validation required to start can't be after end datetime. Also need to ensure lesson is within
+    # the selected term and that start and end dates are the same. Alot of datetime conversion 
+    # required due to error below (temp work around until a better way is found):
+    # "TypeError: can't compare offset-naive and offset-aware datetimes"
     def clean(self):
         cleaned_data = super().clean()
-        lesson_start = cleaned_data.get("lesson_start")
-        lesson_end = cleaned_data.get("lesson_end")
+        lesson_start_str = datetime.strftime(cleaned_data.get("lesson_start"),"%Y-%m-%d %H:%M:%S")
+        lesson_start_day = datetime.strftime(cleaned_data.get("lesson_start"),"%d")
+        lesson_start_date = datetime.strptime(lesson_start_str,"%Y-%m-%d %H:%M:%S")
+        lesson_end_str = datetime.strftime(cleaned_data.get("lesson_end"),"%Y-%m-%d %H:%M:%S")
+        lesson_end_day = datetime.strftime(cleaned_data.get("lesson_end"),"%d")
+        lesson_end_date = datetime.strptime(lesson_end_str,"%Y-%m-%d %H:%M:%S")
+
+        form_term = cleaned_data.get("term")
+        term = Term.objects.get(pk=form_term.pk)
+
+        term_start_str = datetime.strftime(term.term_start_date, "%Y-%m-%d %H:%M:%S")
+        term_start_mes = datetime.strftime(term.term_start_date, "%d/%m/%Y")
+        term_start_date = datetime.strptime(term_start_str, "%Y-%m-%d %H:%M:%S")
+        term_end_str = datetime.strftime(term.term_end_date, "%Y-%m-%d %H:%M:%S")
+        term_end_mes = datetime.strftime(term.term_end_date, "%d/%m/%Y")
+        term_end_date = datetime.strptime(term_end_str, "%Y-%m-%d %H:%M:%S")
+        
         errors={}
 
-        if lesson_start > lesson_end:
+        if lesson_start_date > lesson_end_date:
             errors['lesson_start'] = ValidationError("The lesson start should be before the lesson end")
+
+        if lesson_start_day != lesson_end_day:
+            errors['lesson_start'] = ValidationError("The lesson start should be same day as lesson end")
+
+        if lesson_start_date < term_start_date:
+            errors['lesson_start'] = ValidationError("The lesson start should on or after term start " +
+                                                     term_start_mes)
+
+        if lesson_end_date > term_end_date:
+            errors['lesson_end'] = ValidationError("The lesson start should on or before term end " +
+                                                     term_end_mes)
 
         if errors:
             raise ValidationError(errors)

@@ -35,10 +35,10 @@
                     <a class="nav-link" href="{% url 'accounts:refdata' %}">Products & Terms</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:accounts' %}">Accounts</a>
+                    <a class="nav-link" href="{% url 'accounts:accounts' %}">Create Invoices</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:invoices' %}">Invoices</a>
+                    <a class="nav-link" href="{% url 'accounts:invoices' %}">All Invoices</a>
                 </li>
             {% endif %}
             <!-- Only customers should see this nav bar -->
@@ -55,8 +55,8 @@
             {% endif %}
           </ul>
         </div>
-        <span style="color:azure; margin-right: 22px;">Hello, {{ request.user }}</span>
-        <span><a style="color:azure;" href="{% url 'accounts:logout' %}">Logout</a></span>
+        <span name="username" style="color:azure; margin-right: 22px;">Hello, {{ request.user }}</span>
+        <span name="logout"><a style="color:azure;" href="{% url 'accounts:logout' %}">Logout</a></span>
     </nav>
     {% endif %}
     

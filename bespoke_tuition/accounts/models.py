@@ -7,9 +7,10 @@ from django.contrib.auth.models import User
 letters_only = RegexValidator(r'^[a-zA-Z]*$', 'Only letters are allowed.')
 numbers_only = RegexValidator(r'^[0-9]*$', 'Only numbers are allowed.')
 
-
+# Main client table, this is linked to the django users table for when customers
+# register.
 class Client(models.Model):
-    user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
     forename = models.CharField(max_length=100, validators=[letters_only])
     surname = models.CharField(max_length=100, validators=[letters_only])
     date_inserted = models.DateTimeField(default=now)
@@ -19,7 +20,9 @@ class Client(models.Model):
     def __str__(self):
         return str(self.forename + ' ' + self.surname)
 
-
+# Address table to populate client addresses and future new address which is why
+# the effective from a to dates are there. The invoice can then retrieve the address
+# at the time the invoice was created. Linked to client table
 class Address(models.Model):
     client = models.ForeignKey(Client, related_name='address', on_delete=models.CASCADE)
     line_one = models.CharField('Address Line One', max_length=100)
@@ -38,7 +41,8 @@ class Address(models.Model):
     def __str__(self):
         return str(self.client)
 
-
+# Contacts table. The email address is unique to stop multiple users registering with the same.
+# Linked to client table
 class ContactDetails(models.Model):
     client = models.ForeignKey(Client, related_name='contacts', on_delete=models.CASCADE)
     contact_number = models.CharField(max_length=15, validators=[numbers_only])
@@ -51,7 +55,9 @@ class ContactDetails(models.Model):
     def __str__(self):
         return str(self.client)
 
-
+# Student table to hold basic student details. Many to many field for the parents as children
+# can have multiple parents if they want to split the costs. And parents can have multiple children
+# being taught
 class Student(models.Model):
     YEAR_1 = 1
     YEAR_2 = 2
@@ -89,7 +95,8 @@ class Student(models.Model):
     def __str__(self):
         return str(self.forename + ' ' + self.surname)
 
-
+# Tuition address table. This doesn't actually need a effective from and too like the client address
+# as we dont need to keep a record of this one. linked to student
 class TuitionAddress(models.Model):
     student = models.ForeignKey(Student, related_name='address_student', on_delete=models.CASCADE)
     line_one = models.CharField('Address Line One', max_length=100)
@@ -108,7 +115,8 @@ class TuitionAddress(models.Model):
     def __str__(self):
         return str(self.student)
 
-
+# Products table to add new products. Important for creating bespoke products for splitting bills with 
+# multiple parents.
 class Products(models.Model):
     product_name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=8, decimal_places=2)
@@ -123,7 +131,7 @@ class Products(models.Model):
     def __str__(self):
         return str(self.product_name)
 
-
+# Term table to match the school term as tuition is only offered in term time
 class Term(models.Model):
     term_name = models.CharField(max_length=100)
     term_start_date = models.DateField()
@@ -134,7 +142,8 @@ class Term(models.Model):
     def __str__(self):
         return str(self.term_name)
 
-
+# Invoice table to show, total, amount paid and outstanding with status.
+# Linked to client
 class Invoices(models.Model):
     DRAFT = 1
     ISSUED = 2
@@ -159,7 +168,9 @@ class Invoices(models.Model):
     def __str__(self):
         return str(self.invoice_number)
 
-
+# The main table that drives most functionality. Lessons need to be linked to students to show
+# when the lesson will take place. Linked to products to show cost of the lesson. Linked to term
+# to ensure the lesson is within that term and linked to invoice to be included in the invoice produced.
 class Lesson(models.Model):
     student = models.ForeignKey(Student, null=True, related_name='lesson_student', on_delete=models.SET_NULL)
     lesson_type = models.ForeignKey(Products, related_name='lesson_link', on_delete=models.PROTECT)
